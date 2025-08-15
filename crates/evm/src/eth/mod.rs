@@ -41,7 +41,7 @@ pub struct EthEvmBuilder<DB: Database, I = NoOpInspector> {
 
 impl<DB: Database> EthEvmBuilder<DB, NoOpInspector> {
     /// Creates a builder from the provided `EvmEnv` and database.
-    pub fn from_env(db: DB, env: EvmEnv) -> Self {
+    pub fn new(db: DB, env: EvmEnv) -> Self {
         Self {
             db,
             block_env: env.block_env,
@@ -267,7 +267,7 @@ impl EvmFactory for EthEvmFactory {
     type Precompiles = PrecompilesMap;
 
     fn create_evm<DB: Database>(&self, db: DB, input: EvmEnv) -> Self::Evm<DB, NoOpInspector> {
-        EthEvmBuilder::from_env(db, input).build()
+        EthEvmBuilder::new(db, input).build()
     }
 
     fn create_evm_with_inspector<DB: Database, I: Inspector<Self::Context<DB>>>(
@@ -276,7 +276,7 @@ impl EvmFactory for EthEvmFactory {
         input: EvmEnv,
         inspector: I,
     ) -> Self::Evm<DB, I> {
-        EthEvmBuilder::from_env(db, input).activate_inspector(inspector).build()
+        EthEvmBuilder::new(db, input).activate_inspector(inspector).build()
     }
 }
 
