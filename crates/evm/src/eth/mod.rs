@@ -54,7 +54,7 @@ impl<DB: Database> EthEvmBuilder<DB, NoOpInspector> {
 }
 
 impl<DB: Database, I> EthEvmBuilder<DB, I> {
-    /// Sets a custom inspector and changes the inspector type of the builder.
+    /// Sets a custom inspector
     pub fn inspector<J>(self, inspector: J) -> EthEvmBuilder<DB, J> {
         EthEvmBuilder {
             db: self.db,
@@ -66,10 +66,20 @@ impl<DB: Database, I> EthEvmBuilder<DB, I> {
         }
     }
 
-    /// Enables or disables invoking the inspector during transaction execution.
-    pub fn inspect(mut self, inspect: bool) -> Self {
+    /// Sets a custom inspector and enables invoking it during transaction execution.
+    pub fn activate_inspector<J>(self, inspector: J) -> EthEvmBuilder<DB, J> {
+        self.inspector(inspector).inspect()
+    }
+
+    /// Sets whether to invoke the inspector during transaction execution.
+    pub fn set_inspect(mut self, inspect: bool) -> Self {
         self.inspect = inspect;
         self
+    }
+
+    /// Enables invoking the inspector during transaction execution.
+    pub fn inspect(self) -> Self {
+        self.set_inspect(true)
     }
 
     /// Overrides the precompiles map. If not provided, it will be derived from the `SpecId` in
@@ -266,7 +276,7 @@ impl EvmFactory for EthEvmFactory {
         input: EvmEnv,
         inspector: I,
     ) -> Self::Evm<DB, I> {
-        EthEvmBuilder::from_env(db, input).inspector(inspector).inspect(true).build()
+        EthEvmBuilder::from_env(db, input).activate_inspector(inspector).build()
     }
 }
 
