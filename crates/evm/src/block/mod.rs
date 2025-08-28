@@ -68,7 +68,7 @@ pub enum CommitChanges {
 
 impl CommitChanges {
     /// Returns `true` if transaction should be committed into block executor's state.
-    pub fn should_commit(self) -> bool {
+    pub const fn should_commit(self) -> bool {
         matches!(self, Self::Yes)
     }
 }
