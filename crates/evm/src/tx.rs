@@ -13,8 +13,82 @@ use alloy_eips::{
     eip7702::{RecoveredAuthority, RecoveredAuthorization},
     Typed2718,
 };
-use alloy_primitives::{Address, Bytes, TxKind};
+use alloy_primitives::{Address, Bytes, TxKind, U256};
 use revm::{context::TxEnv, context_interface::either::Either};
+
+/// Reference-based snapshot of transaction environment data.
+///
+/// This structure holds commonly-needed transaction information that precompiles
+/// might require. Rather than storing a reference to the full `Transaction` trait
+/// object (which isn't dyn-compatible), we store the concrete data we extract from
+/// it, making it compatible with dynamic dispatch.
+#[derive(Clone, Debug)]
+pub struct TxEnvRef {
+    /// Transaction caller/sender address.
+    pub caller: Address,
+    /// Gas limit for the transaction.
+    pub gas_limit: u64,
+    /// Value sent with the transaction.
+    pub value: U256,
+    /// Transaction nonce.
+    pub nonce: u64,
+    /// Chain ID of the transaction.
+    pub chain_id: Option<u64>,
+    /// Gas price per unit of gas.
+    pub gas_price: u128,
+    /// Priority fee per unit of gas (EIP-1559).
+    pub gas_priority_fee: Option<u128>,
+}
+
+impl TxEnvRef {
+    /// Creates a new [`TxEnvRef`] from revm's `TxEnv`.
+    pub fn from_tx_env(tx: &TxEnv) -> Self {
+        Self {
+            caller: tx.caller,
+            gas_limit: tx.gas_limit,
+            value: tx.value,
+            nonce: tx.nonce,
+            chain_id: tx.chain_id,
+            gas_price: tx.gas_price,
+            gas_priority_fee: tx.gas_priority_fee,
+        }
+    }
+
+    /// Returns the transaction caller/sender address.
+    pub const fn caller(&self) -> Address {
+        self.caller
+    }
+
+    /// Returns the gas limit of the transaction.
+    pub const fn gas_limit(&self) -> u64 {
+        self.gas_limit
+    }
+
+    /// Returns the value sent with the transaction.
+    pub const fn value(&self) -> U256 {
+        self.value
+    }
+
+    /// Returns the transaction nonce.
+    pub const fn nonce(&self) -> u64 {
+        self.nonce
+    }
+
+    /// Returns the chain ID of the transaction.
+    pub const fn chain_id(&self) -> Option<u64> {
+        self.chain_id
+    }
+
+    /// Returns the gas price per unit of gas.
+    pub const fn gas_price(&self) -> u128 {
+        self.gas_price
+    }
+
+    /// Returns the priority fee per unit of gas (EIP-1559).
+    pub const fn gas_priority_fee(&self) -> Option<u128> {
+        self.gas_priority_fee
+    }
+}
 
 /// Trait marking types that can be converted into a transaction environment.
 ///

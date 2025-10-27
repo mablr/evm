@@ -1,6 +1,6 @@
 //! EVM traits.
 
-use crate::Database;
+use crate::{Database, TxEnvRef};
 use alloc::boxed::Box;
 use alloy_primitives::{Address, Log, B256, U256};
 use core::{error::Error, fmt, fmt::Debug};
@@ -158,20 +158,78 @@ where
 pub struct EvmInternals<'a> {
     internals: Box<dyn EvmInternalsTr + 'a>,
     block_env: &'a (dyn Block + 'a),
+    /// Transaction environment reference containing commonly-used transaction data.
+    ///
+    /// This field provides access to transaction-specific information to precompiles.
+    /// Note: We store `TxEnvRef` (concrete data) rather than a `Transaction` trait object
+    /// because the `Transaction` trait is not dyn-compatible.
+    tx_env_ref: Option<TxEnvRef>,
 }
 
 impl<'a> EvmInternals<'a> {
-    /// Creates a new [`EvmInternals`] instance.
+    /// Creates a new [`EvmInternals`] instance without transaction environment.
     pub fn new<T>(journal: &'a mut T, block_env: &'a dyn Block) -> Self
     where
         T: JournalTr<Database: Database> + Debug,
     {
-        Self { internals: Box::new(EvmInternalsImpl(journal)), block_env }
+        Self { internals: Box::new(EvmInternalsImpl(journal)), block_env, tx_env_ref: None }
+    }
+
+    /// Creates a new [`EvmInternals`] instance with transaction environment.
+    pub fn new_with_tx<T>(
+        journal: &'a mut T,
+        block_env: &'a dyn Block,
+        tx_env: &revm::context::TxEnv,
+    ) -> Self
+    where
+        T: JournalTr<Database: Database> + Debug,
+    {
+        Self {
+            internals: Box::new(EvmInternalsImpl(journal)),
+            block_env,
+            tx_env_ref: Some(TxEnvRef::from_tx_env(tx_env)),
+        }
+    }
+
+    /// Creates a new [`EvmInternals`] instance with transaction environment from a generic transaction type.
+    ///
+    /// This is useful when you have a transaction type that implements the `Transaction` trait
+    /// but is not exactly `revm::context::TxEnv`. The provided closure should extract the
+    /// necessary fields from the transaction.
+    pub fn new_with_tx_fn<J, TxRefFn>(
+        journal: &'a mut J,
+        block_env: &'a dyn Block,
+        tx_ref_fn: TxRefFn,
+    ) -> Self
+    where
+        J: JournalTr<Database: Database> + Debug,
+        TxRefFn: FnOnce() -> TxEnvRef,
+    {
+        Self {
+            internals: Box::new(EvmInternalsImpl(journal)),
+            block_env,
+            tx_env_ref: Some(tx_ref_fn()),
+        }
     }
 
     /// Returns the  evm's block information.
     pub const fn block_env(&self) -> impl Block + 'a {
         self.block_env
+    }
+
+    /// Returns the transaction environment reference if available.
+    ///
+    /// This provides access to transaction-specific data like caller, gas limit, value, nonce,
+    /// chain ID, and gas price. This is useful for precompiles that need transaction context.
+    pub fn tx_env(&self) -> Option<&TxEnvRef> {
+        self.tx_env_ref.as_ref()
+    }
+
+    /// Sets the transaction environment reference.
+    ///
+    /// This is typically called after construction to provide transaction context to precompiles.
+    pub fn set_tx_env(&mut self, tx_ref: TxEnvRef) {
+        self.tx_env_ref = Some(tx_ref);
     }
 
     /// Returns the current block number.
