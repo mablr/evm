@@ -1,5 +1,6 @@
 use crate::{FromRecoveredTx, FromTxWithEncoded};
 
+use alloy_consensus::{TxEip1559, TxEip2930, TxEip4844, TxEip7702, TxLegacy};
 use alloy_eips::{Encodable2718, Typed2718};
 use alloy_primitives::{Address, Bytes};
 use op_alloy_consensus::{OpTxEnvelope, TxDeposit};
@@ -48,27 +49,115 @@ impl FromTxWithEncoded<OpTxEnvelope> for TxEnv {
     }
 }
 
-impl FromTxWithEncoded<OpTxEnvelope> for OpTransaction<TxEnv> {
-    fn from_encoded_tx(tx: &OpTxEnvelope, caller: Address, encoded: Bytes) -> Self {
-        let base = TxEnv::from_recovered_tx(tx, caller);
-
-        let deposit = if let OpTxEnvelope::Deposit(tx) = tx {
-            DepositTransactionParts {
-                source_hash: tx.source_hash,
-                mint: Some(tx.mint),
-                is_system_transaction: tx.is_system_transaction,
-            }
-        } else {
-            Default::default()
-        };
-
-        Self { base, enveloped_tx: Some(encoded), deposit }
-    }
-}
-
 impl FromRecoveredTx<OpTxEnvelope> for OpTransaction<TxEnv> {
     fn from_recovered_tx(tx: &OpTxEnvelope, sender: Address) -> Self {
         let encoded = tx.encoded_2718();
         Self::from_encoded_tx(tx, sender, encoded.into())
+    }
+}
+
+impl FromTxWithEncoded<OpTxEnvelope> for OpTransaction<TxEnv> {
+    fn from_encoded_tx(tx: &OpTxEnvelope, caller: Address, encoded: Bytes) -> Self {
+        match tx {
+            OpTxEnvelope::Legacy(tx) => Self::from_encoded_tx(tx.tx(), caller, encoded),
+            OpTxEnvelope::Eip1559(tx) => Self::from_encoded_tx(tx.tx(), caller, encoded),
+            OpTxEnvelope::Eip2930(tx) => Self::from_encoded_tx(tx.tx(), caller, encoded),
+            OpTxEnvelope::Eip7702(tx) => Self::from_encoded_tx(tx.tx(), caller, encoded),
+            OpTxEnvelope::Deposit(tx) => Self::from_encoded_tx(tx.inner(), caller, encoded),
+        }
+    }
+}
+
+impl FromRecoveredTx<TxLegacy> for OpTransaction<TxEnv> {
+    fn from_recovered_tx(tx: &TxLegacy, sender: Address) -> Self {
+        let base = TxEnv::from_recovered_tx(tx, sender);
+        Self { base, enveloped_tx: None, deposit: Default::default() }
+    }
+}
+
+impl FromTxWithEncoded<TxLegacy> for OpTransaction<TxEnv> {
+    fn from_encoded_tx(tx: &TxLegacy, caller: Address, encoded: Bytes) -> Self {
+        let base = TxEnv::from_recovered_tx(tx, caller);
+        Self { base, enveloped_tx: Some(encoded), deposit: Default::default() }
+    }
+}
+
+impl FromRecoveredTx<TxEip2930> for OpTransaction<TxEnv> {
+    fn from_recovered_tx(tx: &TxEip2930, sender: Address) -> Self {
+        let base = TxEnv::from_recovered_tx(tx, sender);
+        Self { base, enveloped_tx: None, deposit: Default::default() }
+    }
+}
+
+impl FromTxWithEncoded<TxEip2930> for OpTransaction<TxEnv> {
+    fn from_encoded_tx(tx: &TxEip2930, caller: Address, encoded: Bytes) -> Self {
+        let base = TxEnv::from_recovered_tx(tx, caller);
+        Self { base, enveloped_tx: Some(encoded), deposit: Default::default() }
+    }
+}
+
+impl FromRecoveredTx<TxEip1559> for OpTransaction<TxEnv> {
+    fn from_recovered_tx(tx: &TxEip1559, sender: Address) -> Self {
+        let base = TxEnv::from_recovered_tx(tx, sender);
+        Self { base, enveloped_tx: None, deposit: Default::default() }
+    }
+}
+
+impl FromTxWithEncoded<TxEip1559> for OpTransaction<TxEnv> {
+    fn from_encoded_tx(tx: &TxEip1559, caller: Address, encoded: Bytes) -> Self {
+        let base = TxEnv::from_recovered_tx(tx, caller);
+        Self { base, enveloped_tx: Some(encoded), deposit: Default::default() }
+    }
+}
+
+impl FromRecoveredTx<TxEip4844> for OpTransaction<TxEnv> {
+    fn from_recovered_tx(tx: &TxEip4844, sender: Address) -> Self {
+        let base = TxEnv::from_recovered_tx(tx, sender);
+        Self { base, enveloped_tx: None, deposit: Default::default() }
+    }
+}
+
+impl FromTxWithEncoded<TxEip4844> for OpTransaction<TxEnv> {
+    fn from_encoded_tx(tx: &TxEip4844, caller: Address, encoded: Bytes) -> Self {
+        let base = TxEnv::from_recovered_tx(tx, caller);
+        Self { base, enveloped_tx: Some(encoded), deposit: Default::default() }
+    }
+}
+
+impl FromRecoveredTx<TxEip7702> for OpTransaction<TxEnv> {
+    fn from_recovered_tx(tx: &TxEip7702, sender: Address) -> Self {
+        let base = TxEnv::from_recovered_tx(tx, sender);
+        Self { base, enveloped_tx: None, deposit: Default::default() }
+    }
+}
+
+impl FromTxWithEncoded<TxEip7702> for OpTransaction<TxEnv> {
+    fn from_encoded_tx(tx: &TxEip7702, caller: Address, encoded: Bytes) -> Self {
+        let base = TxEnv::from_recovered_tx(tx, caller);
+        Self { base, enveloped_tx: Some(encoded), deposit: Default::default() }
+    }
+}
+
+impl FromRecoveredTx<TxDeposit> for OpTransaction<TxEnv> {
+    fn from_recovered_tx(tx: &TxDeposit, sender: Address) -> Self {
+        let base = TxEnv::from_recovered_tx(tx, sender);
+        let deposit = DepositTransactionParts {
+            source_hash: tx.source_hash,
+            mint: Some(tx.mint),
+            is_system_transaction: tx.is_system_transaction,
+        };
+        Self { base, enveloped_tx: None, deposit }
+    }
+}
+
+impl FromTxWithEncoded<TxDeposit> for OpTransaction<TxEnv> {
+    fn from_encoded_tx(tx: &TxDeposit, caller: Address, encoded: Bytes) -> Self {
+        let base = TxEnv::from_recovered_tx(tx, caller);
+        let deposit = DepositTransactionParts {
+            source_hash: tx.source_hash,
+            mint: Some(tx.mint),
+            is_system_transaction: tx.is_system_transaction,
+        };
+        Self { base, enveloped_tx: Some(encoded), deposit }
     }
 }
