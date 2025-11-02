@@ -882,9 +882,9 @@ mod tests {
         // define a function to modify the precompile to always return a constant value
         spec_precompiles.map_precompile(&identity_address, move |_original_dyn| {
             // create a new DynPrecompile that always returns our constant
-            |_input: PrecompileInput<'_>| -> PrecompileResult {
+            (|_input: PrecompileInput<'_>| -> PrecompileResult {
                 Ok(PrecompileOutput::new(10, Bytes::from_static(b"constant value")))
-            }
+            })
             .into()
         });
 
