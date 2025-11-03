@@ -140,13 +140,8 @@ impl FromTxWithEncoded<TxEip7702> for OpTransaction<TxEnv> {
 
 impl FromRecoveredTx<TxDeposit> for OpTransaction<TxEnv> {
     fn from_recovered_tx(tx: &TxDeposit, sender: Address) -> Self {
-        let base = TxEnv::from_recovered_tx(tx, sender);
-        let deposit = DepositTransactionParts {
-            source_hash: tx.source_hash,
-            mint: Some(tx.mint),
-            is_system_transaction: tx.is_system_transaction,
-        };
-        Self { base, enveloped_tx: None, deposit }
+        let encoded = tx.encoded_2718();
+        Self::from_encoded_tx(tx, sender, encoded.into())
     }
 }
 
