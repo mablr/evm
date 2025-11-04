@@ -62,6 +62,12 @@ trait EvmInternalsTr: Database<Error = ErasedError> + Debug {
 
     fn set_code(&mut self, address: Address, code: Bytecode);
 
+    fn set_balance(&mut self, address: Address, balance: U256) -> Result<(), EvmInternalsError>;
+
+    fn incr_balance(&mut self, address: Address, balance: U256) -> Result<bool, EvmInternalsError>;
+
+    fn decr_balance(&mut self, address: Address, balance: U256) -> Result<bool, EvmInternalsError>;
+
     fn sstore(
         &mut self,
         address: Address,
@@ -132,6 +138,22 @@ where
 
     fn set_code(&mut self, address: Address, code: Bytecode) {
         self.0.set_code(address, code);
+    }
+
+    fn set_balance(&mut self, address: Address, balance: U256) -> Result<(), EvmInternalsError> {
+        let mut load = self.0.load_account_mut(address).map_err(EvmInternalsError::database)?;
+        load.data.set_balance(balance);
+        Ok(())
+    }
+
+    fn incr_balance(&mut self, address: Address, balance: U256) -> Result<bool, EvmInternalsError> {
+        let mut state = self.0.load_account_mut(address).map_err(EvmInternalsError::database)?;
+        Ok(state.data.incr_balance(balance))
+    }
+
+    fn decr_balance(&mut self, address: Address, balance: U256) -> Result<bool, EvmInternalsError> {
+        let mut load = self.0.load_account_mut(address).map_err(EvmInternalsError::database)?;
+        Ok(load.data.decr_balance(balance))
     }
 
     fn sstore(
@@ -219,6 +241,41 @@ impl<'a> EvmInternals<'a> {
     /// Sets bytecode to the account.
     pub fn set_code(&mut self, address: Address, code: Bytecode) {
         self.internals.set_code(address, code);
+    }
+
+    /// Sets the balance of the account.
+    ///
+    /// If balance is the same, a journal entry is still added.
+    ///
+    /// Touches the account in all cases.
+    pub fn set_balance(
+        &mut self,
+        address: Address,
+        balance: U256,
+    ) -> Result<(), EvmInternalsError> {
+        self.internals.set_balance(address, balance)
+    }
+
+    /// Increments the balance of the account.
+    ///
+    /// Returns true if successful, false if overflow occurred.
+    pub fn incr_balance(
+        &mut self,
+        address: Address,
+        balance: U256,
+    ) -> Result<bool, EvmInternalsError> {
+        self.internals.incr_balance(address, balance)
+    }
+
+    /// Decrements the balance of the account.
+    ///
+    /// Returns true if successful, false if underflow occurred.
+    pub fn decr_balance(
+        &mut self,
+        address: Address,
+        balance: U256,
+    ) -> Result<bool, EvmInternalsError> {
+        self.internals.decr_balance(address, balance)
     }
 
     /// Stores the storage value in Journal state.
