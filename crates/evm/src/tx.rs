@@ -5,8 +5,8 @@
 //! of these traits is to enable flexible transaction input while maintaining type safety.
 
 use alloy_consensus::{
-    crypto::secp256k1, transaction::Recovered, EthereumTxEnvelope, TxEip1559, TxEip2930, TxEip4844,
-    TxEip7702, TxLegacy,
+    crypto::secp256k1, transaction::Recovered, EthereumTxEnvelope, Signed, TxEip1559, TxEip2930,
+    TxEip4844, TxEip7702, TxLegacy,
 };
 use alloy_eips::{
     eip2718::WithEncoded,
@@ -151,6 +151,12 @@ impl FromRecoveredTx<TxLegacy> for TxEnv {
     }
 }
 
+impl FromRecoveredTx<Signed<TxLegacy>> for TxEnv {
+    fn from_recovered_tx(tx: &Signed<TxLegacy>, sender: Address) -> Self {
+        Self::from_recovered_tx(tx.tx(), sender)
+    }
+}
+
 impl FromTxWithEncoded<TxLegacy> for TxEnv {
     fn from_encoded_tx(tx: &TxLegacy, sender: Address, _encoded: Bytes) -> Self {
         Self::from_recovered_tx(tx, sender)
@@ -173,6 +179,12 @@ impl FromRecoveredTx<TxEip2930> for TxEnv {
             access_list: access_list.clone(),
             ..Default::default()
         }
+    }
+}
+
+impl FromRecoveredTx<Signed<TxEip2930>> for TxEnv {
+    fn from_recovered_tx(tx: &Signed<TxEip2930>, sender: Address) -> Self {
+        Self::from_recovered_tx(tx.tx(), sender)
     }
 }
 
@@ -209,6 +221,12 @@ impl FromRecoveredTx<TxEip1559> for TxEnv {
             access_list: access_list.clone(),
             ..Default::default()
         }
+    }
+}
+
+impl FromRecoveredTx<Signed<TxEip1559>> for TxEnv {
+    fn from_recovered_tx(tx: &Signed<TxEip1559>, sender: Address) -> Self {
+        Self::from_recovered_tx(tx.tx(), sender)
     }
 }
 
@@ -249,6 +267,12 @@ impl FromRecoveredTx<TxEip4844> for TxEnv {
             max_fee_per_blob_gas: *max_fee_per_blob_gas,
             ..Default::default()
         }
+    }
+}
+
+impl FromRecoveredTx<Signed<TxEip4844>> for TxEnv {
+    fn from_recovered_tx(tx: &Signed<TxEip4844>, sender: Address) -> Self {
+        Self::from_recovered_tx(tx.tx(), sender)
     }
 }
 
@@ -300,6 +324,12 @@ impl FromRecoveredTx<TxEip7702> for TxEnv {
                 .collect(),
             ..Default::default()
         }
+    }
+}
+
+impl FromRecoveredTx<Signed<TxEip7702>> for TxEnv {
+    fn from_recovered_tx(tx: &Signed<TxEip7702>, sender: Address) -> Self {
+        Self::from_recovered_tx(tx.tx(), sender)
     }
 }
 
