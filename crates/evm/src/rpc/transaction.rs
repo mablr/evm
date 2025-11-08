@@ -97,9 +97,8 @@ impl<TxIn: alloy_consensus::Transaction, T: alloy_consensus::Transaction + From<
 /// context about a transaction in a block.
 ///
 /// The `RpcTxConverter` has two blanket implementations:
-/// * `()` assuming `Tx` implements [`IntoRpcTx`] and is used as default for [`RpcConverter`].
-/// * `Fn(Tx, Address, TxInfo) -> RpcTx` and can be applied using
-///   [`RpcConverter::with_rpc_tx_converter`].
+/// * `()` assuming `Tx` implements [`IntoRpcTx`].
+/// * `Fn(Tx, Address, TxInfo) -> RpcTx` for custom conversion functions.
 ///
 /// One should prefer to implement [`IntoRpcTx`] for `Tx` to get the `RpcTxConverter` implementation
 /// for free, thanks to the blanket implementation, unless the conversion requires more context. For
@@ -148,9 +147,8 @@ where
 /// * `SimTx` is the corresponding consensus layer transaction for execution simulation
 ///
 /// The `SimTxConverter` has two blanket implementations:
-/// * `()` assuming `TxReq` implements [`TryIntoSimTx`] and is used as default for [`RpcConverter`].
-/// * `Fn(TxReq) -> Result<SimTx, ValueError<TxReq>>` and can be applied using
-///   [`RpcConverter::with_sim_tx_converter`].
+/// * `()` assuming `TxReq` implements [`TryIntoSimTx`].
+/// * `Fn(TxReq) -> Result<SimTx, E>` for custom conversion functions.
 ///
 /// One should prefer to implement [`TryIntoSimTx`] for `TxReq` to get the `SimTxConverter`
 /// implementation for free, thanks to the blanket implementation, unless the conversion requires
