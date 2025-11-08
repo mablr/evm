@@ -10,7 +10,7 @@ use revm::{
     context::{BlockEnv, CfgEnv, TxEnv},
     context_interface::{either::Either, Block},
 };
-use std::{convert::Infallible, error::Error, fmt::Debug};
+use core::{convert::Infallible, error::Error, fmt::Debug};
 use thiserror::Error;
 
 /// Converts `self` into `T`. The opposite of [`FromConsensusTx`].

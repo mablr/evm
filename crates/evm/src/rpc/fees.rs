@@ -1,5 +1,5 @@
 use alloy_primitives::{B256, U256};
-use std::cmp::min;
+use core::cmp::min;
 use thiserror::Error;
 
 /// Helper type for representing the fees of a `TransactionRequest`
