@@ -5,12 +5,11 @@ use alloy_rpc_types_eth::{
     request::{TransactionInputError, TransactionRequest},
     Transaction, TransactionInfo,
 };
-use core::error;
+use core::{convert::Infallible, error, error::Error, fmt::Debug};
 use revm::{
     context::{BlockEnv, CfgEnv, TxEnv},
     context_interface::{either::Either, Block},
 };
-use core::{convert::Infallible, error::Error, fmt::Debug};
 use thiserror::Error;
 
 /// Converts `self` into `T`. The opposite of [`FromConsensusTx`].
