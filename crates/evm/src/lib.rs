@@ -29,6 +29,8 @@ pub mod op;
 #[cfg(feature = "overrides")]
 pub mod overrides;
 pub mod precompiles;
+#[cfg(feature = "rpc")]
+pub mod rpc;
 pub mod tracing;
 
 mod either;

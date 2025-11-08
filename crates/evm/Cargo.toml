@@ -27,6 +27,7 @@ op-alloy-rpc-types-engine = { workspace = true, optional = true }
 revm.workspace = true
 op-revm = { workspace = true, optional = true }
 op-alloy-consensus = { workspace = true, optional = true }
+op-alloy-rpc-types = { workspace = true, optional = true }
 
 auto_impl.workspace = true
 derive_more.workspace = true
@@ -63,3 +64,5 @@ call-util = ["overrides"]
 engine = ["dep:alloy-rpc-types-engine"]
 op-engine = ["dep:op-alloy-rpc-types-engine"]
 asm-keccak = ["alloy-primitives/asm-keccak", "revm/asm-keccak"]
+rpc = ["dep:alloy-rpc-types-eth"]
+op-rpc = ["rpc", "dep:op-alloy-rpc-types"]
