@@ -205,6 +205,12 @@ where
     fn try_into_sim_tx(self) -> Result<T, ValueError<Self>>;
 }
 
+impl TryIntoSimTx<EthereumTxEnvelope<TxEip4844>> for TransactionRequest {
+    fn try_into_sim_tx(self) -> Result<EthereumTxEnvelope<TxEip4844>, ValueError<Self>> {
+        Self::build_typed_simulate_transaction(self)
+    }
+}
+
 /// Adds extra context to [`TransactionInfo`].
 pub trait TxInfoMapper<T> {
     /// An associated output type that carries [`TransactionInfo`] with some extra context.
@@ -222,12 +228,6 @@ impl<T> TxInfoMapper<T> for () {
 
     fn try_map(&self, _tx: &T, tx_info: TransactionInfo) -> Result<Self::Out, Self::Err> {
         Ok(tx_info)
-    }
-}
-
-impl TryIntoSimTx<EthereumTxEnvelope<TxEip4844>> for TransactionRequest {
-    fn try_into_sim_tx(self) -> Result<EthereumTxEnvelope<TxEip4844>, ValueError<Self>> {
-        Self::build_typed_simulate_transaction(self)
     }
 }
 
