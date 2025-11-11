@@ -1,48 +1,22 @@
-use core::convert::Infallible;
-
-use alloy_consensus::{error::ValueError, transaction::Recovered, SignableTransaction};
-use alloy_primitives::{Address, Bytes, Signature};
-use op_alloy_consensus::{transaction::OpTransactionInfo, OpTxEnvelope};
+use alloy_primitives::Bytes;
 use op_alloy_rpc_types::OpTransactionRequest;
 use op_revm::OpTransaction;
-use revm::context::{BlockEnv, CfgEnv, TxEnv};
+use revm::context::{BlockEnv, TxEnv};
 
-use crate::rpc::{EthTxEnvError, FromConsensusTx, TryIntoSimTx, TryIntoTxEnv};
-
-impl<T: op_alloy_consensus::OpTransaction + alloy_consensus::Transaction> FromConsensusTx<T>
-    for op_alloy_rpc_types::Transaction<T>
-{
-    type TxInfo = OpTransactionInfo;
-    type Err = Infallible;
-
-    fn from_consensus_tx(tx: T, signer: Address, tx_info: Self::TxInfo) -> Result<Self, Self::Err> {
-        Ok(Self::from_transaction(Recovered::new_unchecked(tx, signer), tx_info))
-    }
-}
-
-impl TryIntoSimTx<OpTxEnvelope> for OpTransactionRequest {
-    fn try_into_sim_tx(self) -> Result<OpTxEnvelope, ValueError<Self>> {
-        let tx = self
-            .build_typed_tx()
-            .map_err(|request| ValueError::new(request, "Required fields missing"))?;
-
-        // Create an empty signature for the transaction.
-        let signature = Signature::new(Default::default(), Default::default(), false);
-
-        Ok(tx.into_signed(signature).into())
-    }
-}
+use crate::{
+    rpc::{EthTxEnvError, TryIntoTxEnv},
+    EvmEnv,
+};
 
 impl TryIntoTxEnv<OpTransaction<TxEnv>> for OpTransactionRequest {
     type Err = EthTxEnvError;
 
     fn try_into_tx_env<Spec>(
         self,
-        cfg_env: &CfgEnv<Spec>,
-        block_env: &BlockEnv,
+        evm_env: &EvmEnv<Spec, BlockEnv>,
     ) -> Result<OpTransaction<TxEnv>, Self::Err> {
         Ok(OpTransaction {
-            base: self.as_ref().clone().try_into_tx_env(cfg_env, block_env)?,
+            base: self.as_ref().clone().try_into_tx_env(evm_env)?,
             enveloped_tx: Some(Bytes::new()),
             deposit: Default::default(),
         })
@@ -62,10 +36,9 @@ mod tests {
 
         let req: OpTransactionRequest = serde_json::from_str(s).unwrap();
 
-        let cfg = CfgEnv::<OpSpecId>::default();
-        let block_env = BlockEnv::default();
-        let tx_env = req.try_into_tx_env(&cfg, &block_env).unwrap();
-        assert_eq!(tx_env.gas_limit(), block_env.gas_limit);
+        let evm_env = EvmEnv::<OpSpecId, BlockEnv>::default();
+        let tx_env = req.try_into_tx_env(&evm_env).unwrap();
+        assert_eq!(tx_env.gas_limit(), evm_env.block_env().gas_limit);
         assert_eq!(tx_env.gas_price(), 0);
         assert!(tx_env.enveloped_tx().unwrap().is_empty());
     }

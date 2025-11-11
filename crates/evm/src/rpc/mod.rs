@@ -4,7 +4,4 @@ mod fees;
 mod transaction;
 
 pub use fees::{CallFees, CallFeesError};
-pub use transaction::{
-    EthTxEnvError, FromConsensusTx, IntoRpcTx, RpcTxConverter, SimTxConverter, TryIntoSimTx,
-    TryIntoTxEnv, TxInfoMapper,
-};
+pub use transaction::{EthTxEnvError, TryIntoTxEnv};
